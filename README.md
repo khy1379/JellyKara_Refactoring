@@ -45,14 +45,14 @@ Refactoring assignment
   6. JellyKara class에서 PlayerTypeChanger의 static curStrategy 변수를 통해 Jelly 움직임 구현
 
 # 리팩토링 영역 2 
-- 특정 class에 다수 존재하는 static 변수
+- 특정 class에 존재하는 static 변수
   - 변경 Script : PlayerTypeChange, JellyKara, JellySpriteControl 외 다수
     - 위 3개 명시 script를 제외하면 타입 확인용으로만 사용하긴 함
 
 ## 선정 이유
-- 외부 script 파일과 연동 시킬 방법이 public static 변수 및 함수 외에는 생각나지 않아서 static 변수를 많이 사용
+- 외부 script 파일과 연동 시킬 방법이 public static 변수 및 함수 외에는 생각나지 않아서 static 변수를 사용
 - 또한 class가 신경 쓰지 않아도 되는 class에서도 가져다 쓰게 되어 해당 class에 대한 의존성이 매우 깊어짐
-- 해당 class가 Singleton 등의 1개만 존재하며 공유하는 것이 중요한 class라면 몰라도, 특정 영역에서만 사용되어 굳이 static 변수를 사용하여 사용 가능한 메모리 양을 줄이고, 의존성을 깊게 가지게 만드는 것은 좋지 못한 습관이라 판단되어 리팩토링
+- 해당 class가 Singleton 등의 1개만 존재하며 공유하는 것이 중요한 class라면 몰라도, 특정 영역에서만 사용되는 class에서, 의존성을 깊게 가지게 만드는 것은 좋지 못한 습관이라 판단되어 리팩토링
 
 ## 리팩토링에 사용한 디자인 패턴
 - 옵저버 패턴
@@ -103,6 +103,9 @@ Refactoring assignment
   7. GameManager class에서 object가 queue에 없을 경우 object 신규 생성, 그 외에는 queue에서 dequeue 하여 사용하도록 설정
 
 # 아쉬운 점
+- 2번 리팩토링 : 옵저버 패턴 영역에서 착각한 점이 있어서 너무 과도하게 수정한 것이 아닌가 생각이 듬
+  - static 변수 및 함수가 매우 많다고 생각하여 리팩토링 진행 -> 기존 class의 내용은 적으나, 변경한 class는 내용이 매우 많아짐
+  - PlayerTypeChanger라는 class는 잘 하면 GameManager처럼 단 하나만 계속 유지되어도 좋은 class가 아니었나 하는 생각도 들게 됨
 - 다른 영역들에서도 아쉬운 점이 많이 보임
   - GameManager : 싱글톤으로 변경 가능하나, 오래 걸릴 것으로 예상되어 넘김
   - Type 체크 : Player나 GameManager 등을 통하지 않고 PlayerPrefs.GetInt를 통해 확인하도록 되어있으나, 오래 걸릴 것으로 예상되어 넘김 
