@@ -2,22 +2,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class JellySpriteControl : MonoBehaviour
+public class JellySpriteControl : MonoBehaviour, IPlayerTypeChangeable, IKaraEventable
 {
     public Sprite[] jellys;
     public GameManager gm;
-    public JellyKara pl;
+    JellyKara kara;
     SpriteRenderer spriteRenderer;
     public BoxCollider2D col;
     public bool isSpriteIdle;
     bool isSpriteDecrease;
     Vector2 spriteScale;
-    void Start()
+    public void SpriteInit()
     {
+        kara = JellyKara.instanse;
+        kara.AddKaraEventObserver(this);
+        kara.ptc.AddTypeChangeObserver(this);
         spriteRenderer = GetComponent<SpriteRenderer>();
         isSpriteIdle = true;
         isSpriteDecrease = true;
-        switch (PlayerTypeChanger.pt)
+        switch (kara.ptc.pt)
         {
             default:
             case PlayerType.Slime:
@@ -34,62 +37,77 @@ public class JellySpriteControl : MonoBehaviour
                 break;
         }
         spriteRenderer.transform.rotation = Quaternion.Euler(Vector3.zero);
-
-    }
-    private void FixedUpdate()
-    {
-        IdleSpriteExe();
     }
     private void LateUpdate()
     {
         SpriteChange();
     }
-    void IdleSpriteExe()
+    public void IdleSpriteExe()
     {
         if (isSpriteIdle)
         {
-            switch (PlayerTypeChanger.pt)
+            if (kara.ptc.pt == PlayerType.Earth)
             {
-                case PlayerType.Earth:
-                    if(pl.rb.gravityScale > 0)
-                    spriteRenderer.transform.Rotate(Vector3.forward * -200 * Time.deltaTime, Space.Self);
-                    else
-                        spriteRenderer.transform.Rotate(Vector3.forward * 200 * Time.deltaTime, Space.Self);
-                    break;
-                case PlayerType.Bear:
-                case PlayerType.Slime:
-                default:
-                    if (isSpriteDecrease)
-                    {
-                        spriteRenderer.transform.localScale = new Vector2(spriteRenderer.transform.localScale.x - Time.fixedDeltaTime / 2f, spriteRenderer.transform.localScale.y - Time.fixedDeltaTime / 2f);
-                        if (spriteRenderer.transform.localScale.x < spriteScale.x * 0.8f)
-                        {
-                            isSpriteDecrease = false;
-                            spriteRenderer.transform.localScale = spriteScale * 0.8f;
-
-                        }
-                    }
-                    else
-                    {
-                        spriteRenderer.transform.localScale = new Vector2(spriteRenderer.transform.localScale.x + Time.fixedDeltaTime / 2f, spriteRenderer.transform.localScale.y + Time.fixedDeltaTime / 2f);
-                        if (spriteRenderer.transform.localScale.x > spriteScale.x)
-                        {
-                            isSpriteDecrease = true;
-                            spriteRenderer.transform.localScale = spriteScale;
-
-                        }
-                    }
-                    break;
+                SpriteRoll();
             }
+            else
+            {
+                SpriteBiggerAndSmaller();
+            }
+        }
+    }
+    void SpriteRoll()
+    {
+        if (kara.rb.gravityScale > 0)
+            spriteRenderer.transform.Rotate(Vector3.forward * -200 * Time.deltaTime, Space.Self);
+        else
+            spriteRenderer.transform.Rotate(Vector3.forward * 200 * Time.deltaTime, Space.Self);
+    }
+    void SpriteBiggerAndSmaller()
+    {
+        if (isSpriteDecrease)
+        {
+            spriteRenderer.transform.localScale = new Vector2(spriteRenderer.transform.localScale.x - Time.fixedDeltaTime / 2f, spriteRenderer.transform.localScale.y - Time.fixedDeltaTime / 2f);
+            if (spriteRenderer.transform.localScale.x < spriteScale.x * 0.8f)
+            {
+                isSpriteDecrease = false;
+                spriteRenderer.transform.localScale = spriteScale * 0.8f;
+
+            }
+        }
+        else
+        {
+            spriteRenderer.transform.localScale = new Vector2(spriteRenderer.transform.localScale.x + Time.fixedDeltaTime / 2f, spriteRenderer.transform.localScale.y + Time.fixedDeltaTime / 2f);
+            if (spriteRenderer.transform.localScale.x > spriteScale.x)
+            {
+                isSpriteDecrease = true;
+                spriteRenderer.transform.localScale = spriteScale;
+
+            }
+        }
+    }
+    public void TypeChange(PlayerType type)
+    {
+        switch (type)
+        {
+            case PlayerType.Slime:
+                SpriteChangeSlime();
+                break;
+            case PlayerType.Bear:
+                SpriteChangeBear();
+                break;
+            case PlayerType.Earth:
+                SpriteChangeEarth();
+                break;
         }
     }
     void SpriteChange()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha1) && PlayerTypeChanger.pt == PlayerType.Slime)
+        if (Input.GetKeyDown(KeyCode.Alpha1) && kara.ptc.pt == PlayerType.Slime)
             SpriteChangeSlime();
-        else if (Input.GetKeyDown(KeyCode.Alpha2) && PlayerTypeChanger.pt == PlayerType.Bear)
+        else if (Input.GetKeyDown(KeyCode.Alpha2) && kara.ptc.pt == PlayerType.Bear)
             SpriteChangeBear();
-        else if (Input.GetKeyDown(KeyCode.Alpha3) && PlayerTypeChanger.pt == PlayerType.Earth)
+        else if (Input.GetKeyDown(KeyCode.Alpha3) && kara.ptc.pt == PlayerType.Earth)
             SpriteChangeEarth();
     }
     public void JellySpriteReset()
@@ -102,7 +120,7 @@ public class JellySpriteControl : MonoBehaviour
     {
         if (spriteRenderer.sprite != jellys[0])
         {
-            if(spriteRenderer.sprite == jellys[2])
+            if (spriteRenderer.sprite == jellys[2])
                 spriteRenderer.transform.rotation = Quaternion.Euler(Vector3.zero);
             spriteRenderer.sprite = jellys[0];
             ScaleSpriteToCollider(0);
@@ -171,5 +189,11 @@ public class JellySpriteControl : MonoBehaviour
         // Z축은 2D에서 보통 1을 유지합니다.
         spriteScale = transform.localScale = new Vector2(scaleX, scaleY);
 
+    }
+
+
+    public void KaraDie()
+    {
+        JellySpriteReset();
     }
 }

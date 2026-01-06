@@ -1,45 +1,87 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+
+
+public interface IKaraEventable
+{
+    void KaraDie();
+}
+public class KaraEventObserver
+{
+    List<IKaraEventable> observerList = new List<IKaraEventable>();
+    public void AddkaraEventObserver(IKaraEventable karaDieClass) => observerList.Add(karaDieClass);
+    public void RemovekaraEventObserver(IKaraEventable karaDieClass) => observerList.Remove(karaDieClass);
+    public void ClaerAllkaraEventObserver() => observerList.Clear();
+    public void DieAction()
+    {
+        foreach (IKaraEventable observer in observerList)
+        {
+            observer.KaraDie();
+        }
+    }
+}
 public class JellyKara : MonoBehaviour
 {
+    public static JellyKara instanse;
     public AudioSource auSource;
     BoxCollider2D thisCol;
     public Rigidbody2D rb;
     public AudioClip[] auClip;
     public GameManager gm;
+    public PlayerTypeChanger ptc;
     public JellySpriteControl jellySprite;
     public float upMoveSpeed;
     public float speed;
     public float baseSpeed;
     public float maxUpMoveSpeed;
+    KaraEventObserver observer;
     void Awake()
     {
-        PlayerTypeChanger.kara = this;
-        thisCol = GetComponent<BoxCollider2D>();
-        auSource = GetComponent<AudioSource>();
-        if (thisCol.isTrigger == true)
-            thisCol.isTrigger = false;
-        auSource.clip = auClip[0];
-        upMoveSpeed = 0;
-        speed = baseSpeed;
+        InitJellyKara();
+    }
+    void InitJellyKara()
+    {
+        if (instanse == null)
+        {
+            instanse = this;
+            thisCol = GetComponent<BoxCollider2D>();
+            auSource = GetComponent<AudioSource>();
+            if (thisCol.isTrigger == true)
+                thisCol.isTrigger = false;
+            auSource.clip = auClip[0];
+            upMoveSpeed = 0;
+            speed = baseSpeed;
+            observer = new KaraEventObserver();
+            ptc.JellyTypeInit();
+            jellySprite.SpriteInit();
+        }
+        else
+            Destroy(gameObject);
     }
     private void OnDestroy()
     {
-        PlayerTypeChanger.kara = null;
+        RemoveStaticJellyKara();
+    }
+    void RemoveStaticJellyKara()
+    {
+        if (instanse != null) instanse = null;
     }
     private void FixedUpdate()
     {
-        if (gm.status == GameStatus.Playing )
+        if (gm.status == GameStatus.Playing)
         {
-            PlayerTypeChanger.JellyMoving();
+            ptc.JellyMoving();
+            jellySprite.IdleSpriteExe();
         }
     }
     void Update()
     {
         if (gm.status == GameStatus.Playing)
         {
-            PlayerTypeChanger.InputKey();
+            ptc.InputKey();
             PlayerTypeChange();
         }
     }
@@ -51,35 +93,29 @@ public class JellyKara : MonoBehaviour
             {
                 case "Score":
                     gm.Score++;
-                    Destroy(col.gameObject);
                     break;
                 case "Slime":
                     PlayerTypeChangeSlime();
-                    Destroy(col.gameObject);
                     break;
                 case "Bear":
                     PlayerTypeChangeBear();
-                    Destroy(col.gameObject);
                     break;
                 case "Earth":
                     PlayerTypeChangeEarth();
-                    Destroy(col.gameObject);
                     break;
             }
+            col.gameObject.SetActive(false);
         }
     }
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (gm.status == GameStatus.Playing)
         {
-            switch (PlayerTypeChanger.pt)
+            switch (ptc.pt)
             {
                 case PlayerType.Bear:
-                    upMoveSpeed = 0;
-                    speed = 0;
-                    break;
                 case PlayerType.Earth:
-                    rb.velocity = Vector2.zero;
+                    ptc.CollisionEnterSetting();
                     break;
             }
         }
@@ -88,13 +124,11 @@ public class JellyKara : MonoBehaviour
     {
         if (gm.status == GameStatus.Playing)
         {
-            switch (PlayerTypeChanger.pt)
+            switch (ptc.pt)
             {
                 case PlayerType.Bear:
-                    speed = baseSpeed;
-                    break;
                 case PlayerType.Earth:
-                    rb.velocity = Vector2.zero;
+                    ptc.CollisionExitSetting();
                     break;
             }
         }
@@ -116,36 +150,23 @@ public class JellyKara : MonoBehaviour
     }
     void PlayerTypeChangeSlime()
     {
-        //PlayerTypeChangeInit();
-        PlayerTypeChanger.InputStateReset();
-        PlayerTypeChanger.TypeSetSlime();
-        jellySprite.SpriteChangeSlime();
+        ptc.TypeChange(PlayerType.Slime);
     }
     void PlayerTypeChangeBear()
     {
-        //PlayerTypeChangeInit();
-        PlayerTypeChanger.InputStateReset();
-        PlayerTypeChanger.TypeSetBear();
-        jellySprite.SpriteChangeBear();
+        ptc.TypeChange(PlayerType.Bear);
     }
     void PlayerTypeChangeEarth()
     {
-        //PlayerTypeChangeInit();
-        PlayerTypeChanger.InputStateReset();
-        PlayerTypeChanger.TypeSetEarth();
-        jellySprite.SpriteChangeEarth();
+        ptc.TypeChange(PlayerType.Earth);
     }
     public void GameFinish()
     {
         gm.status = GameStatus.Finish;
         if (thisCol.isTrigger == false)
             thisCol.isTrigger = true;
-        if (jellySprite.isSpriteIdle == true)
-        {
-            jellySprite.JellySpriteReset();
-        }
         rb.velocity = Vector2.zero;
-        PlayerTypeChanger.InputStateReset();
+        observer.DieAction();
         auSource.clip = auClip[1];
         auSource.Play();
         StartCoroutine(BackToMain());
@@ -153,6 +174,9 @@ public class JellyKara : MonoBehaviour
     IEnumerator BackToMain()
     {
         yield return new WaitForSeconds(1.5f);
+        observer.ClaerAllkaraEventObserver();
         SceneManager.LoadScene("MainMenu");
     }
+    public void AddKaraEventObserver(IKaraEventable obsClass) => observer.AddkaraEventObserver(obsClass);
+    public void RemoveKaraEventObserver(IKaraEventable obsClass) => observer.RemovekaraEventObserver(obsClass);
 }
