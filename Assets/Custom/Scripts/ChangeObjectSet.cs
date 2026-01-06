@@ -12,7 +12,7 @@ public class ChangeObjectSet : MonoBehaviour
     void ChangeColliderSet()
     {
         int[] targetJellyNum = new int[2];
-        switch (PlayerTypeChanger.pt)
+        switch ((PlayerType)PlayerPrefs.GetInt("Jelly", 0))
         {
             case PlayerType.Slime:
                 targetJellyNum[0] = 1;

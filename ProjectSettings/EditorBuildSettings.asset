@@ -4,5 +4,11 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/jetkara/Scenes/MainMenu.unity
+    guid: 5d48c7aadfab6024198fbb9615f518ca
+  - enabled: 1
+    path: Assets/jetkara/Scenes/Game.unity
+    guid: 53faa398fb0bcd744a05b651112b8673
   m_configObjects: {}

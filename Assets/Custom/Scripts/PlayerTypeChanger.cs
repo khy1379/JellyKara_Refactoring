@@ -1,14 +1,16 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.EventSystems;
 
+#region JellyStrategy class
 public abstract class JellyStrategy
 {
-    protected JellyKara kara;
     public bool isInput;
+    protected JellyKara kara;
     public JellyStrategy()
     {
-        if(PlayerTypeChanger.kara != null)
-            kara = PlayerTypeChanger.kara;
+        if (JellyKara.instanse != null)
+            kara = JellyKara.instanse;
     }
     public abstract void UpdateMoving();
     public virtual void InputKey()
@@ -41,6 +43,8 @@ public abstract class JellyStrategy
             kara.rb.velocity = Vector3.zero;
         }
     }
+    public virtual void CollisionEnterSetting() { }
+    public virtual void CollisionExitSetting() { }
 }
 public class SlimeStrategy : JellyStrategy
 {
@@ -103,6 +107,17 @@ public class BearStrategy : JellyStrategy
             kara.rb.velocity = new Vector2(0, kara.upMoveSpeed);
         }
     }
+
+    public override void CollisionEnterSetting()
+    {
+        kara.upMoveSpeed = 0;
+        kara.speed = 0;
+    }
+
+    public override void CollisionExitSetting()
+    {
+        kara.speed = kara.baseSpeed;
+    }
 }
 public class EarthStrategy : JellyStrategy
 {
@@ -131,7 +146,18 @@ public class EarthStrategy : JellyStrategy
             kara.rb.gravityScale = 1;
         }
     }
+
+    public override void CollisionEnterSetting()
+    {
+        kara.rb.velocity = Vector2.zero;
+    }
+
+    public override void CollisionExitSetting()
+    {
+        kara.rb.velocity = Vector2.zero;
+    }
 }
+#endregion
 public enum PlayerType
 {
     Slime,
@@ -139,87 +165,71 @@ public enum PlayerType
     Earth,
 
 }
-public class PlayerTypeChanger : MonoBehaviour
+public interface IPlayerTypeChangeable
 {
-    public static PlayerType pt;
-    public static JellyKara kara;
-    static JellyStrategy curStrategy;
-    static JellyStrategy[] strategyArr;
-    public static bool IsInput => curStrategy.isInput;
-    private void Awake()
+    void TypeChange(PlayerType type);
+}
+public class TypeChagngeObserver
+{
+    List<IPlayerTypeChangeable> observerList = new List<IPlayerTypeChangeable>();
+    public void AddTypeChangeObserver(IPlayerTypeChangeable typeChangeClass) => observerList.Add(typeChangeClass);
+    public void RemoveTypeChangeObserver(IPlayerTypeChangeable typeChangeClass) => observerList.Remove(typeChangeClass);
+    public void ClearAllTypeChangeObserver() => observerList.Clear();
+    public void ObserverAction(PlayerType type)
     {
-        JellyInit();
+        foreach (IPlayerTypeChangeable observer in observerList)
+        {
+            observer.TypeChange(type);
+        }
     }
-    void JellyInit()
+}
+public class PlayerTypeChanger : MonoBehaviour, IKaraEventable
+{
+    public PlayerType pt;
+    JellyStrategy curStrategy;
+    JellyStrategy[] strategyArr;
+    TypeChagngeObserver observer;
+    public void JellyTypeInit()
     {
-        kara = GetComponent<JellyKara>();
+        observer = new TypeChagngeObserver();
         strategyArr = new JellyStrategy[3];
         strategyArr[0] = new SlimeStrategy();
         strategyArr[1] = new BearStrategy();
         strategyArr[2] = new EarthStrategy();
 
-        switch (PlayerPrefs.GetInt("Jelly", 0))
-        {
-            case 1:
-                curStrategy = strategyArr[1];
-                TypeSetBear();
-                break;
-            case 2:
-                curStrategy = strategyArr[2];
-                TypeSetEarth();
-                break;
-            case 0:
-            default:
-                curStrategy = strategyArr[0];
-                TypeSetSlime();
-                break;
-        }
+        int curTypeNum = PlayerPrefs.GetInt("Jelly", 0);
+        curStrategy = strategyArr[curTypeNum];
+        JellyTypeSet((PlayerType)curTypeNum);
+
+        JellyKara.instanse.AddKaraEventObserver(this);
     }
-    public static void InputKey()
+    public void AddTypeChangeObserver(IPlayerTypeChangeable observerClass) => observer.AddTypeChangeObserver(observerClass);
+    public void RemoveTypeChangeObserver(IPlayerTypeChangeable observerClass) => observer.RemoveTypeChangeObserver(observerClass);
+    public void InputKey() => curStrategy.InputKey();
+    public void JellyMoving() => curStrategy.UpdateMoving();
+    public void InputStateReset() => curStrategy.InputStateReset();
+    public void CollisionEnterSetting() => curStrategy.CollisionEnterSetting();
+    public void CollisionExitSetting() => curStrategy.CollisionExitSetting();
+    public void TypeChange(PlayerType type)
     {
-        curStrategy.InputKey();
+        if (pt == type) return;
+        JellyTypeSet(type);
     }
-    public static void JellyMoving()
+    public void JellyTypeSet(PlayerType type)
     {
-        curStrategy.UpdateMoving();
+        int typeNum = (int)type;
+        PlayerPrefs.SetInt("Jelly", typeNum);
+        pt = type;
+        InputStateReset();
+        curStrategy = strategyArr[typeNum];
+        if (observer == null) Debug.Log("observer 없음");
+        observer.ObserverAction(type);
     }
-    public static void InputStateReset()
+
+    public void KaraDie()
     {
-        curStrategy.InputStateReset();
+        InputStateReset();
+        observer.ClearAllTypeChangeObserver();
     }
-    public static void TypeChange(PlayerType type)
-    {
-        switch (type)
-        {
-            case PlayerType.Slime:
-                TypeSetSlime();
-                break;
-            case PlayerType.Bear:
-                TypeSetBear();
-                break;
-            case PlayerType.Earth:
-                TypeSetEarth();
-                break;
-        }
-    }
-    public static void TypeSetSlime()
-    {
-        PlayerPrefs.SetInt("Jelly", 0);
-        pt = PlayerType.Slime;
-        curStrategy = strategyArr[0];
-    }
-    public static void TypeSetBear()
-    {
-        PlayerPrefs.SetInt("Jelly", 1);
-        pt = PlayerType.Bear;
-        curStrategy.InputStateReset();
-        curStrategy = strategyArr[1];
-    }
-    public static void TypeSetEarth()
-    {
-        PlayerPrefs.SetInt("Jelly", 2);
-        pt = PlayerType.Earth;
-        curStrategy.InputStateReset();
-        curStrategy = strategyArr[2];
-    }
+
 }

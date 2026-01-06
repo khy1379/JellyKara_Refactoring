@@ -102,7 +102,6 @@ MonoBehaviour:
   - {fileID: 21300000, guid: ce60f325abe16e1408f2d226e825c21a, type: 3}
   - {fileID: 21300000, guid: 764f930ba03e6324d805335eb66b8c98, type: 3}
   gm: {fileID: 0}
-  pl: {fileID: 5584874768522548871}
   col: {fileID: 0}
   isSpriteIdle: 0
 --- !u!1 &2390177860086856091
@@ -360,8 +359,8 @@ GameObject:
   m_Component:
   - component: {fileID: 510722813669607344}
   - component: {fileID: 4830253630615332933}
-  - component: {fileID: 4545230563715993939}
   - component: {fileID: 5584874768522548871}
+  - component: {fileID: 4545230563715993939}
   - component: {fileID: 7081656242922163718}
   - component: {fileID: 6918695496374244504}
   m_Layer: 0
@@ -417,18 +416,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
---- !u!114 &4545230563715993939
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5924607053121276002}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d729a48e25e861b4f8c771aaba892f35, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &5584874768522548871
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -441,13 +428,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9b9bff9cb2ed0c498ef31bec70b069a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  auSource: {fileID: 0}
   rb: {fileID: 4830253630615332933}
   auClip:
   - {fileID: 8300000, guid: 768876ef01ca30043a665d0f8f9a5a29, type: 3}
   - {fileID: 8300000, guid: 2d77a98d162c5ab45b0b5a457ec644fe, type: 3}
   gm: {fileID: 0}
-  finishCol: {fileID: 7236074090909296037}
+  ptc: {fileID: 4545230563715993939}
   jellySprite: {fileID: 1070053749892060532}
+  upMoveSpeed: 0
+  speed: 0
+  baseSpeed: 0
+  maxUpMoveSpeed: 0
+--- !u!114 &4545230563715993939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5924607053121276002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d729a48e25e861b4f8c771aaba892f35, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pt: 0
 --- !u!82 &7081656242922163718
 AudioSource:
   m_ObjectHideFlags: 0

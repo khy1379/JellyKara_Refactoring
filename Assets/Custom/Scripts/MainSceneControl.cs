@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 
 public class MainSceneControl : MonoBehaviour
 {
     public GameObject jellySelectUI;
     public SpriteRenderer mainJelly;
     public Sprite[] jellys;
+    int CurTypeNum => PlayerPrefs.GetInt("Jelly", 0);
     public void Start()
     {
         MainJellyChange();
@@ -32,35 +29,11 @@ public class MainSceneControl : MonoBehaviour
     }
     void MainJellyChange()
     {
-        switch (PlayerTypeChanger.pt)
-        {
-            default:
-            case PlayerType.Slime:
-                mainJelly.sprite = jellys[0];
-                break;
-            case PlayerType.Bear:
-                mainJelly.sprite = jellys[1];
-                break;
-            case PlayerType.Earth:
-                mainJelly.sprite = jellys[2];
-                break;
-        }
+        mainJelly.sprite = jellys[CurTypeNum];
     }
     void SpriteScaleSet()
     {
-        int index = 0;
-        switch (PlayerTypeChanger.pt)
-        {
-            case PlayerType.Slime:
-                index = 0;
-                break;
-            case PlayerType.Bear:
-                index = 1;
-                break;
-            case PlayerType.Earth:
-                index = 2;
-                break;
-        }
+        int index = CurTypeNum;
         // Sprite의 픽셀 크기 (Rect)
         float spritePixelWidth = jellys[index].rect.width;
         float spritePixelHeight = jellys[index].rect.height;
